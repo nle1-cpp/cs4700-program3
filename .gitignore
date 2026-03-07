@@ -1,0 +1,9 @@
+*.unitypackage
+*.unitypackage.meta
+
+Builds/
+Library/
+Logs/
+UserSettings/
+
+.vscode
