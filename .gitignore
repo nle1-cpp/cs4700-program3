@@ -4,6 +4,7 @@
 Builds/
 Library/
 Logs/
+Temp/
 UserSettings/
 
 .vscode
