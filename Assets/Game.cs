@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+
+using Game.Common;
 using Board;
 
 public class Game : MonoBehavior {

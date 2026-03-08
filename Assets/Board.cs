@@ -1,21 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-enum Movement {
-	Left,
-	Right
-}
- 
-enum Rotation {
-	Clockwise,
-	CounterClockwise,
-	Flip
-}
-
-enum PieceName {
-	I,T,Z,S,L,J,O // corresponds to data that maps shape to a 2d array
-}
-
 class Board : MonoBehavior {
 
 	private int width = 10, height = 20;
