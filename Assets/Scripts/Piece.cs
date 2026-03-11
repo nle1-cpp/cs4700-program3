@@ -188,8 +188,7 @@ namespace Game.Piece {
 					pieceKickData = KickDataI;
 					break;
 				case O:
-					pieceKickData = KickDataO;
-					break;
+					return (0, 0); 
 				default:
 					pieceKickData = KickData;
 					break;

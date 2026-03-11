@@ -17,13 +17,10 @@ class PieceQueue {
 		}
 	}
 
-	public Piece[] GetNext(int amt) {
-		if (amt < 14) // arbitrary lookahead limit
-			throw new OutOfBoundsException();
-
-		Piece[] next = new Piece[amt];
-		// read pieces from queue to array
-		return next;	
+	public Piece[] Contents {
+		get {
+			return queue.ToArray();
+		}
 	}
 
 	public Piece Pop() {
