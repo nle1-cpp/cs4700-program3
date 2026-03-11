@@ -1,15 +1,14 @@
 using System.Collections;
 using UnityEngine;
 
-using Game.PieceUtil;
+using Game.Piece;
 
 class Board : MonoBehavior {
 
 	private int width = 10, height = 20;
 	private Cell[,] cells = new Cell[width,height];
-	private Queue queue;
-
-	private CurrentPiece current = new CurrentPiece();
+	private PieceQueue queue;
+	private BoardPiece current = new BoardPiece();
 
 
 	// Spawn next piece in queue
@@ -41,7 +40,7 @@ class Board : MonoBehavior {
 		BoardPiece(Piece target) {
 			name = n;
 			rotation = 0;
-			position = Util.GetDefaultPositionOfPiece(n); // resolve default position of piece
+			position = Piece.GetSpawnPosition(n); // resolve default position of piece
 		}
 
 		void ChangeTo(Piece target) {
