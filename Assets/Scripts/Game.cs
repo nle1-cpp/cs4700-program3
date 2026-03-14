@@ -19,6 +19,18 @@ public class Game : MonoBehavior {
 
 	void Update() {
 		// descend piece event logic
+		if (current.name == None) 
+			SpawnPiece();
+
+		if (input.hardDropPressed) {
+			OnHardDropPressed();
+			return;
+		}
+
+		if (input.leftPressed && TryMovePiece(-1, 0)) OnMoveOrRotateSucceeded();
+		if (input.rightPressed && TryMovePiece(1, 0)) OnMoveOrRotateSucceeded();
+		if (input.rotatePressed && TryRotatePiece()) OnMoveOrRotateSucceeded();
+		if (input.softDropHeld && TryMovePiece(0, -1)) addSoftDropScore();
 
 		// timer condition to decrement piece one level
 		if (true) { 

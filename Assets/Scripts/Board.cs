@@ -6,23 +6,23 @@ using Game.Piece;
 class Board : MonoBehavior {
 
 	private int width = 10, height = 20;
-	private Cell[,] cells = new Cell[width,height];
+	private List<Row> board  = new List<Row>(height);
 	private PieceQueue queue;
 	private BoardPiece current = new BoardPiece();
 
 
 	// Spawn next piece in queue
-	public void SpawnPiece();
+	public void SpawnNext();
 
 	// Swap current piece with the held piece
-	public void SwapPiece();
+	public void SwapHold();
 
 	// Move piece horizontally
-	public void MovePiece(Movement dir);
+	public void TryMovePiece(Movement dir);
 
 	// Rotate piece
-	public void RotatePiece(Rotation dir);
-	
+	public void TryRotatePiece(Rotation dir);
+
 	// Move the piece down faster
 	public void SoftDrop();
 
@@ -30,21 +30,43 @@ class Board : MonoBehavior {
 	public void HardDrop();
 
 	// Move the piece down 1 cell
-	public void ApplyGravity();
+	private void ApplyGravity() {
+		
+	}
 
-	class BoardPiece {
+	private void LockPiece() {
+		
+	}
+
+	private void ClearFullRows() {
+		int clearedCount = 0;
+		int y = 0;
+
+		while (y < height) {
+			if (Board.rows[y].IsFull) {
+				Board.rows.RemoveAt(y);
+				Board.rows.Add(new Row());
+				clearedCount++;
+			}
+			else
+				y--;
+		}
+
+		if (clearedCount > 0)
+			UpdateScoreAndLevel(clearedCount);
+	}
+
+	class ActivePiece {
 		string name;
 		int rotation;
 		(int x, int y) position;
-		
-		BoardPiece(Piece target) {
+		bool isGrounded;
+
+		ActivePiece(Piece target) {
 			name = n;
 			rotation = 0;
 			position = Piece.GetSpawnPosition(n); // resolve default position of piece
-		}
-
-		void ChangeTo(Piece target) {
-			this(target);
+			isGrounded = false;
 		}
 	}
 
@@ -52,7 +74,7 @@ class Board : MonoBehavior {
 		// get target rotation state data
 		int[,] postData = PieceRotationStateData<I>[post];
 		// lookup kick table		
-		(int,int)[] kickData = Rotation.GetKickData(current.name, pre, post);
+		(int, int)[] kickData = Rotation.GetKickData(current.name, pre, post);
 
 		int validCase = -1, offsetX = 0, offsetY = 0;
 		for (int i = 0; i < 5 && validCase <= 0; i++) {
@@ -63,7 +85,7 @@ class Board : MonoBehavior {
 
 		return (validCase != -1, offsetX, offsetY);
 	}
-	
+
 	private bool CollisionWithOffset(int[,] data, int x, int y) {
 		int candX = current.posX + X;
 		int candY = current.posY + Y;
@@ -72,7 +94,7 @@ class Board : MonoBehavior {
 		int collided = false;
 		for (int i = 0; i < 4 && !collided; i++)
 			for (int j = 0; j < 4 && !collided; j++)
-				if (data[i][j] == 1 && board.cells[i+candX][j+candY] == 1)
+				if (data[i][j] == 1 && board.cells[i + candX][j + candY] == 1)
 					collided = true;
 
 		return !collided;
