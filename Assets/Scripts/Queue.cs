@@ -1,36 +1,39 @@
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
+using Project.Piece;
+
 // Should be able to determine the next 14 pieces
 // while conforming to the 7-bag selection rules
 
-class PieceQueue {
-	private Queue queue;
-	private ConcurrentBag bag;
+class PieceQueue 
+{
+	private Queue<PieceName> queue;
+	private ConcurrentBag<PieceName> bag;
 
 	PieceQueue() {
-		queue = new Queue<Piece>();
-		bag = new ConcurrentBag<Piece>();
+		queue = new Queue<PieceName>();
+		bag = new ConcurrentBag<PieceName>();
 
-		foreach(Piece piece in Enum.GetValues(typeof(Piece))) {
+		foreach(PieceName piece in Enum.GetValues(typeof(PieceName))) {
 			bag.Add(Piece);
 		}
 	}
 
-	public Piece[] Contents {
+	public PieceName[] Contents {
 		get {
 			return queue.ToArray();
 		}
 	}
 
-	public Piece Pop() {
-		Piece next = queue.Pop();
+	public PieceName Pop() {
+		PieceName next = queue.Pop();
 
 		queue.Enqueue(bag.TryTake());
 
 		if (bag.IsEmpty())
-			foreach(Piece piece in Enum.GetValues(typeof(Piece))) {
-				bag.add(Piece);
+			foreach(PieceName piece in Enum.GetValues(typeof(PieceName))) {
+				bag.add(piece);
 			}
 
 		return next;

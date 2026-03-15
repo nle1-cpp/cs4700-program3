@@ -1,9 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-using Game.Piece;
+using Project.Piece;
 
-class Board : MonoBehavior
+class Board : MonoBehaviour
 {
 	public Vector3 rotationPoint;
 	private float previousTime;
@@ -12,7 +12,7 @@ class Board : MonoBehavior
 
 	// private List<Row> board  = new List<Row>(height);
 	private PieceQueue queue;
-	public PieceController controller = new PieceController();
+	private PieceController controller = new PieceController();
 
 
 	private void LockPiece() {
@@ -37,7 +37,7 @@ class Board : MonoBehavior
 			UpdateScoreAndLevel(clearedCount);
 	}
 
-	class PieceController
+	private class PieceController
 	{
 		string name;
 		int rotation;
@@ -53,10 +53,10 @@ class Board : MonoBehavior
 		}
 
 		// Spawn next piece in queue
-		void SpawnPiece();
+		void SpawnPiece() {}
 
 		// Swap current piece with the held piece
-		void SwapPiece();
+		void SwapPiece() {}
 
 		// Move piece horizontally
 		void MovePiece(int step) 

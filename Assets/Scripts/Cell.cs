@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-class Cell : MonoBehavior {
+class Cell : MonoBehaviour {
 	private string style;
 	private bool isEmpty;
 }

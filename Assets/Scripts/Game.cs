@@ -1,10 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-using Game.Common;
-using Board;
-
-public class Game : MonoBehavior
+public class Program : MonoBehaviour
 {
 	private Board board;
 
@@ -13,7 +10,6 @@ public class Game : MonoBehavior
 	private bool softDropHeld, cwRotateHeld, ccwRotateHeld, flipRotateHeld;
 	private int heldTimeThreshold;
 
-	private var ctrl = board.controller;
 
 	void Start()
 	{
@@ -32,26 +28,26 @@ public class Game : MonoBehavior
 
 		// Gravity + Soft Drop
 		if (Input.GetKey(KeyCode.DownArrow))
-			ctrl.softDrop();
+			board.controller.softDrop();
 		else 
-			ctrl.ApplyGravity();
+			board.controller.ApplyGravity();
 
 		// Hard Drop
 		if (Input.GetKeyDown(KeyCode.UpArrow))
-			ctrl.HardDrop();
+			board.controller.HardDrop();
 
 		// Move Left
 		if (Input.GetKeyDown(KeyCode.LeftArrow))
-			ctrl.MovePiece(-1);
+			board.controller.MovePiece(-1);
 		// Move Right
 		else if (Input.GetKeyDown(KeyCode.RightArrow))
-			ctrl.MovePiece(1);
+			board.controller.MovePiece(1);
 
 		// Rotate Counter-Clockwise
 		if (Input.GetKeyDown(KeyCode.Z))
-			ctrl.RotatePiece(-1);
+			board.controller.RotatePiece(-1);
 		//Rotate Clockwise
 		else if (Input.GetKeyDown(KeyCode.X))
-			ctrl.RotatePiece(1);
+			board.controller.RotatePiece(1);
 	}
 }
