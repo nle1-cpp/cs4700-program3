@@ -4,8 +4,8 @@ using UnityEngine;
 using Game.Common;
 using Board;
 
-public class Game : MonoBehavior {
-
+public class Game : MonoBehavior
+{
 	private Board board;
 
 	// useful later
@@ -13,40 +13,37 @@ public class Game : MonoBehavior {
 	private bool softDropHeld, cwRotateHeld, ccwRotateHeld, flipRotateHeld;
 	private int heldTimeThreshold;
 
-	void Start() {
+	private var ctrl = board.controller;
+
+	void Start()
+	{
 		board = new Board();
 	}
 
-	void Update() {
-		// descend piece event logic
+	void Update()
+	{
+		// Gravity + Soft Drop
+		if (Input.GetKey(KeyCode.DownArrow))
+			ctrl.softDrop();
+		else 
+			ctrl.ApplyGravity();
 
-		// timer condition to decrement piece one level
-		if (true) { 
-			board.ApplyGravity();
-		} 
+		// Hard Drop
+		if (Input.GetKeyDown(KeyCode.UpArrow))
+			ctrl.HardDrop();
 
-		// if no keys are down skip the following ?
-		//
-		// handle hard dropping immediately
-		if	(Input.GetButtonDown())
-			board.HardDrop();
+		// Move Left
+		if (Input.GetKeyDown(KeyCode.LeftArrow))
+			ctrl.MovePiece(-1);
+		// Move Right
+		else if (Input.GetKeyDown(KeyCode.RightArrow))
+			ctrl.MovePiece(1);
 
-		// handle soft dropping
-		if	(Input.GetButtonDown())
-			board.SoftDrop();
-
-		// handle inputs for horizontal movement
-		if (Input.GetButtonDown())
-			board.Move(LEFT);
-		else if(Input.GetButtonDown())
-			board.Move(RIGHT);
-
-		// handle inputs for rotation
-		if (Input.GetButtonDown())
-			board.Rotate(CW);
-		else if(Input.GetButtonDown())
-			board.Rotate(CCW);
-		else if(Input.GetButtonDown())
-			board.Rotate(FLIP);
+		// Rotate Counter-Clockwise
+		if (Input.GetKeyDown(KeyCode.Z))
+			ctrl.RotatePiece(-1);
+		//Rotate Clockwise
+		else if (Input.GetKeyDown(KeyCode.X))
+			ctrl.RotatePiece(1);
 	}
 }
