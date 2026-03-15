@@ -7,6 +7,7 @@ public class Tetrimino : MonoBehaviour
     public float fallTime = 0.8f;
     public static int height = 20;
     public static int width = 10;
+    private static Transform[,] grid = new Transform[width,height];
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -76,8 +77,24 @@ public class Tetrimino : MonoBehaviour
         // Fall down + Move Down
         if(Time.time - previousTime > (Input.GetKey(KeyCode.DownArrow) ? fallTime / 10 : fallTime)) {
             transform.position += new Vector3(0, -1, 0);
-            if(!ValidMove()) {transform.position -= new Vector3(0,-1,0);}
+            if(!ValidMove()) {
+                transform.position -= new Vector3(0,-1,0);
+                AddToGrid();
+                this.enabled = false;
+                FindObjectOfType<Spawner>().NewTetromino();
+            }
             previousTime = Time.time;
+        }
+    }
+
+    void AddToGrid()
+    {
+        foreach (Transform children in transform)
+        {
+            int roundedX = Mathf.RoundToInt(children.transform.position.x - 0.001f);
+            int roundedY = Mathf.RoundToInt(children.transform.position.y - 0.001f);
+
+            grid[roundedX,roundedY] = children;
         }
     }
 
@@ -85,13 +102,15 @@ public class Tetrimino : MonoBehaviour
     {
         foreach (Transform children in transform)
         {
-            int roundedX = Mathf.RoundToInt(children.transform.position.x);
-            int roundedY = Mathf.RoundToInt(children.transform.position.y);
+            int roundedX = Mathf.RoundToInt(children.transform.position.x - 0.001f);
+            int roundedY = Mathf.RoundToInt(children.transform.position.y - 0.001f);
 
-            if (roundedX < 0 || roundedX >= width || roundedY < 0 || roundedY >= height)
+            if (roundedX < 0 || roundedX >= width || roundedY < 0 || roundedY >= (height + 2))
             {
                 return false;
             }
+
+            if (grid[roundedX,roundedY] != null) {return false;}
         }
 
         return true;
