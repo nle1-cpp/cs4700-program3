@@ -5,13 +5,17 @@ public class Tetrimino : MonoBehaviour
     public Vector3 rotationPoint;
     private float previousTime;
     public float fallTime = 0.8f;
-    public static int height = 20;
+    public static int height = 22;
     public static int width = 10;
     private static Transform[,] grid = new Transform[width,height];
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        if(!ValidMove())
+        {
+            this.enabled = false;
+            FindObjectOfType<Reveal>().ShowText();
+        }
     }
 
     // Update is called once per frame
@@ -35,8 +39,13 @@ public class Tetrimino : MonoBehaviour
             while(ValidMove())
             {
                 transform.position += new Vector3(0,-1,0);
+                FindObjectOfType<Score>().AddScore(10);
             }
-            if(!ValidMove()) {transform.position += new Vector3(0,1,0);}
+            if(!ValidMove()) 
+            {
+                transform.position += new Vector3(0,1,0);
+                FindObjectOfType<Score>().AddScore(-10);
+            }
         }
         //Rotate Left
         if(Input.GetKeyDown(KeyCode.Z))
@@ -77,8 +86,13 @@ public class Tetrimino : MonoBehaviour
         // Fall down + Move Down
         if(Time.time - previousTime > (Input.GetKey(KeyCode.DownArrow) ? fallTime / 10 : fallTime)) {
             transform.position += new Vector3(0, -1, 0);
+            if (Input.GetKey(KeyCode.DownArrow))
+            {
+                FindObjectOfType<Score>().AddScore(10);
+            }
             if(!ValidMove()) {
                 transform.position -= new Vector3(0,-1,0);
+                if (Input.GetKey(KeyCode.DownArrow)) {FindObjectOfType<Score>().AddScore(-10);}
                 AddToGrid();
                 this.enabled = false;
                 FindObjectOfType<Spawner>().NewTetromino();
