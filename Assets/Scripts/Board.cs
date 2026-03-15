@@ -1,172 +1,264 @@
-using System.Collections;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-using Project.Piece;
-
-class Board : MonoBehaviour
+[Serializable]
+public struct PiecePrefabEntry
 {
-	public Vector3 rotationPoint;
-	private float previousTime;
-	public const float DEFAULT_FALL_STEP_TIME = 0.8f;
-	private const int width = 10, height = 20;
+    public Tetromino tetromino;
+    public Piece prefab;
+}
 
-	// private List<Row> board  = new List<Row>(height);
-	private PieceQueue queue;
-	private PieceController controller = new PieceController();
+public sealed class Board : MonoBehaviour
+{
+    [Header("Board Size")]
+    [SerializeField] private int width = 10;
+    [SerializeField] private int height = 20;
 
+    [Header("Spawning")]
+    [SerializeField] private Vector2Int spawnCell = new Vector2Int(4, 18);
+    [SerializeField] private PiecePrefabEntry[] piecePrefabs;
 
-	private void LockPiece() {
-		
-	}
+    private Transform[,] grid;
+    private readonly Dictionary<Tetromino, Piece> prefabLookup = new Dictionary<Tetromino, Piece>();
+    private Game game;
 
-	private void ClearFullRows() {
-		int clearedCount = 0;
-		int y = 0;
+    public Piece ActivePiece { get; private set; }
 
-		while (y < height) {
-			if (Board.rows[y].IsFull) {
-				Board.rows.RemoveAt(y);
-				Board.rows.Add(new Row());
-				clearedCount++;
-			}
-			else
-				y--;
-		}
+    public bool IsGameOver
+    {
+        get { return game != null && game.IsGameOver; }
+    }
 
-		if (clearedCount > 0)
-			UpdateScoreAndLevel(clearedCount);
-	}
+    public int Width
+    {
+        get { return width; }
+    }
 
-	private class PieceController
-	{
-		string name;
-		int rotation;
-		(int x, int y) position;
-		bool isGrounded;
+    public int Height
+    {
+        get { return height; }
+    }
 
-		PieceController(string startingPiece)
-		{
-			name = startingPiece;
-			rotation = 0;
-			// position = getSpawnPoint();
-			isGrounded = false;
-		}
+    private void Awake()
+    {
+        grid = new Transform[width, height];
+        RebuildPrefabLookup();
+    }
 
-		// Spawn next piece in queue
-		void SpawnPiece() {}
+    private void OnValidate()
+    {
+        width = Mathf.Max(4, width);
+        height = Mathf.Max(8, height);
+        RebuildPrefabLookup();
+    }
 
-		// Swap current piece with the held piece
-		void SwapPiece() {}
+    public void Initialize(Game owner)
+    {
+        game = owner;
+        RebuildPrefabLookup();
+        if (grid == null || grid.GetLength(0) != width || grid.GetLength(1) != height)
+        {
+            grid = new Transform[width, height];
+        }
+    }
 
-		// Move piece horizontally
-		void MovePiece(int step) 
-		{
-			transform.position += new Vector3(step, 0, 0);
-			if (!ValidMove()) { transform.position -= new Vector3(step, 0, 0); }
-		}
+    public void ClearBoard()
+    {
+        if (ActivePiece != null)
+        {
+            Destroy(ActivePiece.gameObject);
+            ActivePiece = null;
+        }
 
-		// Rotate piece
-		void RotatePiece(int factor) 
-		{
-			transform.RotateAround(transform.TransformPoint(rotationPoint), new Vector3(0, 0, 1), 90 * factor);
-			if (!ValidMove())
-			{
-				transform.position += new Vector3(1, 0, 0);
-				//Checking all possible valid rotation positions
-				if (!ValidMove()) { transform.position += new Vector3(-2, 0, 0); }
-				if (!ValidMove()) { transform.position += new Vector3(1, 1, 0); }
-				if (!ValidMove()) { transform.position += new Vector3(1, 0, 0); }
-				if (!ValidMove()) { transform.position += new Vector3(-2, 0, 0); }
-				if (!ValidMove())
-				{
-					transform.position += new Vector3(1, -1, 0);
-					transform.RotateAround(transform.TransformPoint(rotationPoint), new Vector3(0, 0, 1), -90 * factor);
-				}
-			}
-		}
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Transform cell = grid[x, y];
+                if (cell != null)
+                {
+                    Destroy(cell.gameObject);
+                    grid[x, y] = null;
+                }
+            }
+        }
+    }
 
-		// Move the piece down as far as possible and set the piece
-		void HardDrop() 
-		{
-			while (ValidMove())
-				transform.position += new Vector3(0, -1, 0);
+    public bool SpawnPiece(Tetromino tetromino)
+    {
+        if (!prefabLookup.ContainsKey(tetromino) || prefabLookup[tetromino] == null)
+        {
+            Debug.LogError("No prefab assigned for tetromino " + tetromino + ".");
+            return false;
+        }
 
-			if (!ValidMove()) { transform.position += new Vector3(0, 1, 0); }
-		}
+        if (ActivePiece != null)
+        {
+            Destroy(ActivePiece.gameObject);
+            ActivePiece = null;
+        }
 
-		// Move the piece down faster
-		void SoftDrop() 
-		{
-			DescendPiece(DEFAULT_FALL_STEP_TIME / 10f);
-		}
+        Vector3 worldSpawn = CellToWorld(spawnCell);
+        Piece instance = Instantiate(prefabLookup[tetromino], worldSpawn, Quaternion.identity);
+        instance.name = tetromino + " Piece";
+        instance.Initialize(this);
+        ActivePiece = instance;
 
-		// Move the piece down 1 cell
-		void ApplyGravity() 
-		{
-			DescendPiece(DEFAULT_FALL_STEP_TIME);
-		}
-		
-		void DescendPiece(int fallStepTime) 
-		{
-			if (Time.time - previousTime > fallStepTime)
-			{
-				transform.position += new Vector3(0, -1, 0);
-				if (!ValidMove()) { transform.position -= new Vector3(0, -1, 0); }
-				previousTime = Time.time;
-			}
-		}
-
-		private bool ValidMove()
-		{
-			foreach (Transform children in transform)
-			{
-				int roundedX = Mathf.RoundToInt(children.transform.position.x);
-				int roundedY = Mathf.RoundToInt(children.transform.position.y);
-
-				if (roundedX < 0 || roundedX >= width || roundedY < 0 || roundedY >= height)
-					 return false;
-			}
+        if (!IsValidPosition(instance))
+        {
+            Destroy(instance.gameObject);
+            ActivePiece = null;
+            return false;
+        }
 
         return true;
-		}
+    }
 
-		private void LockPiece() {
-			
-		}
-	}
+    public bool IsValidPosition(Piece piece)
+    {
+        IReadOnlyList<Transform> blocks = piece.Blocks;
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            Vector2Int cell = WorldToCell(blocks[i].position);
+            if (!IsInside(cell))
+            {
+                return false;
+            }
 
-	private (bool, int, int) ValidateRotation(int pre, int post)
-	{
-		// get target rotation state data
-		int[,] postData = PieceRotationStateData<I>[post];
-		// lookup kick table		
-		(int, int)[] kickData = Rotation.GetKickData(current.name, pre, post);
+            if (grid[cell.x, cell.y] != null)
+            {
+                return false;
+            }
+        }
 
-		int validCase = -1, offsetX = 0, offsetY = 0;
-		for (int i = 0; i < 5 && validCase <= 0; i++)
-		{
-			(offsetX, offsetY) = kickData[validCase];
-			if (!CollisionWithOffset(postData, offsetX, offsetY))
-				validCase = i;
-		}
+        return true;
+    }
 
-		return (validCase != -1, offsetX, offsetY);
-	}
+    public void LockActivePiece(Piece piece)
+    {
+        if (piece != ActivePiece)
+        {
+            return;
+        }
 
+        IReadOnlyList<Transform> blocks = piece.Blocks;
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            Transform block = blocks[i];
+            Vector2Int cell = WorldToCell(block.position);
+            if (!IsInside(cell))
+            {
+                continue;
+            }
 
-	private bool CollisionWithOffset(int[,] data, int x, int y)
-	{
-		int candX = current.posX + X;
-		int candY = current.posY + Y;
+            block.SetParent(transform, true);
+            block.position = CellToWorld(cell);
+            grid[cell.x, cell.y] = block;
+        }
 
-		// check if cells of rotation must be filled while the corresponding board cell is filled
-		int collided = false;
-		for (int i = 0; i < 4 && !collided; i++)
-			for (int j = 0; j < 4 && !collided; j++)
-				if (data[i][j] == 1 && board.cells[i + candX][j + candY] == 1)
-					collided = true;
+        Destroy(piece.gameObject);
+        ActivePiece = null;
 
-		return !collided;
-	}
+        int clearedLines = ClearFullRows();
+        if (game != null)
+        {
+            game.OnPieceLocked(clearedLines);
+        }
+    }
 
+    public Vector3 CellToWorld(Vector2Int cell)
+    {
+        return transform.position + new Vector3(cell.x, cell.y, 0f);
+    }
+
+    public Vector2Int WorldToCell(Vector3 worldPosition)
+    {
+        Vector3 local = worldPosition - transform.position;
+        return new Vector2Int(Mathf.RoundToInt(local.x), Mathf.RoundToInt(local.y));
+    }
+
+    private int ClearFullRows()
+    {
+        int cleared = 0;
+
+        for (int y = 0; y < height; y++)
+        {
+            if (!IsRowFull(y))
+            {
+                continue;
+            }
+
+            ClearRow(y);
+            ShiftRowsDown(y + 1);
+            y--;
+            cleared++;
+        }
+
+        return cleared;
+    }
+
+    private bool IsRowFull(int y)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            if (grid[x, y] == null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void ClearRow(int y)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            if (grid[x, y] != null)
+            {
+                Destroy(grid[x, y].gameObject);
+                grid[x, y] = null;
+            }
+        }
+    }
+
+    private void ShiftRowsDown(int startY)
+    {
+        for (int y = startY; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Transform block = grid[x, y];
+                if (block == null)
+                {
+                    continue;
+                }
+
+                grid[x, y - 1] = block;
+                grid[x, y] = null;
+                block.position += Vector3.down;
+            }
+        }
+    }
+
+    private bool IsInside(Vector2Int cell)
+    {
+        return cell.x >= 0 && cell.x < width && cell.y >= 0 && cell.y < height;
+    }
+
+    private void RebuildPrefabLookup()
+    {
+        prefabLookup.Clear();
+        if (piecePrefabs == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < piecePrefabs.Length; i++)
+        {
+            PiecePrefabEntry entry = piecePrefabs[i];
+            prefabLookup[entry.tetromino] = entry.prefab;
+        }
+    }
 }

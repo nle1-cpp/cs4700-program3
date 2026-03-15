@@ -1,245 +1,206 @@
-namespace Project.Piece {
+using System.Collections.Generic;
+using UnityEngine;
 
-	enum PieceName {
-		O, I, T, Z, S, L, J
-	}
+public sealed class Piece : MonoBehaviour
+{
+    [Header("Identity")]
+    [SerializeField] private Tetromino tetromino;
 
-	static class PieceRotation {
+    [Header("Blocks")]
+    [Tooltip("Leave empty to auto-collect direct child transforms as blocks.")]
+    [SerializeField] private Transform[] blocks;
 
-		enum State {
-			NORTH = 0,
-			EAST = 1,
-			SOUTH = 2,
-			WEST = 3,
-		}	
+    [Header("Movement")]
+    [SerializeField] private float stepDelay = 0.8f;
+    [SerializeField] private float softDropMultiplier = 0.1f;
 
-		static readonly int[,,] StateData = {
-			{ // O-Piece
-				{
-					{0,0,0,0},
-					{0,1,1,0},
-					{0,1,1,0},
-					{0,0,0,0}	
-				},
-				{
-					{0,0,0,0},
-					{0,1,1,0},
-					{0,1,1,0},
-					{0,0,0,0}	
-				},
-				{
-					{0,0,0,0},
-					{0,1,1,0},
-					{0,1,1,0},
-					{0,0,0,0}	
-				},
-				{
-					{0,0,0,0},
-					{0,1,1,0},
-					{0,1,1,0},
-					{0,0,0,0}	
-				}
-			},
-			{ // I-Piece
-				{
-					{0,0,0,0},
-					{1,1,1,1},
-					{0,0,0,0},
-					{0,0,0,0} 
-				},
-				{	
-					{0,0,1,0},
-					{0,0,1,0},
-					{0,0,1,0},
-					{0,0,1,0} 
-				},
-				{
-					{0,0,0,0},
-					{0,0,0,0},
-					{1,1,1,1},
-					{0,0,0,0} 
-				},
-				{
-					{0,1,0,0},
-					{0,1,0,0},
-					{0,1,0,0},
-					{0,1,0,0} 
-				},
-			},
-			{	// T-Piece
-				{
-					{0,1,0},
-					{1,1,1},
-					{0,0,0} 
-				},
-				{
-					{0,1,0},
-					{0,1,1},
-					{0,1,0} 
-				},
-				{
-					{0,0,0},
-					{1,1,1},
-					{0,1,0} 
-				},
-				{
-					{0,1,0},
-					{1,1,0},
-					{0,1,0} 
-				},
-				
-			},
-			{ // Z-Piece
-				{
-					{1,1,0},
-					{0,1,1},
-					{0,0,0} 
-				},
-				{
-					{0,0,1},
-					{0,1,1},
-					{0,1,0} 
-				},
-				{
-					{0,0,0},
-					{1,1,0},
-					{0,1,1}
-				},
-				{
-					{0,1,0},
-					{1,1,0},
-					{1,0,0} 
-				},
-			},
-			{ // S-Piece
-				{
-					{0,1,1},
-					{1,1,0},
-					{0,0,0} 
-				},
-				{
-					{0,1,0},
-					{0,1,1},
-					{0,0,1} 
-				},
-				{
-					{0,0,0},
-					{0,1,1},
-					{1,1,0}
-				},
-				{
-					{1,0,0},
-					{1,1,0},
-					{0,1,0} 
-				},
-			}, 
-			{ // L-Piece
-				{
-					{0,0,1},
-					{1,1,1},
-					{0,0,0} 
-				},
-				{
-					{0,1,0},
-					{0,1,0},
-					{0,1,1} 
-				},
-				{
-					{0,0,0},
-					{1,1,1},
-					{1,0,0} 
-				},
-				{
-					{1,1,0},
-					{0,1,0},
-					{0,1,0} 
-				},
-			}, 
-			{	// J-Piece
-				{
-					{1,0,0},
-					{1,1,1},
-					{0,0,0} 
-				},
-				{
-					{0,1,1},
-					{0,1,0},
-					{0,1,0} 
-				},
-				{
-					{0,0,0},
-					{1,1,1},
-					{0,0,1} 
-				},
-				{
-					{0,1,0},
-					{0,1,0},
-					{1,1,0} 
-				}
-			},
-		};
-		
-		enum RotationType {
-			NE,EN,ES,SE,SW,WS,WN,NW
-		}
+    private Board board;
+    private float nextStepTime;
+    private bool locked;
 
-		static readonly (int,int)[,] KickData = // test for 5 posible kick position
-		{
-			{ ( 0, 0), (-1, 0), (-1, 1), ( 0,-2), (-1,-2) }, 
-			{ ( 0, 0), (+1, 0), (+1,-1), ( 0,+2), (+1,+2) },
-			{ ( 0, 0), (+1, 0), (+1,-1), ( 0,+2), (+1,+2) },
-			{ ( 0, 0), (-1, 0), (-1,+1), ( 0,-2), (-1,-2) },
-			{ ( 0, 0), (+1, 0), (+1,+1), ( 0,-2), (+1,-2) },
-			{ ( 0, 0), (-1, 0), (-1,-1), ( 0,+2), (-1,+2) },
-			{ ( 0, 0), (-1, 0), (-1,-1), ( 0,+2), (-1,+2) },
-			{ ( 0, 0), (+1, 0), (+1,+1), ( 0,-2), (+1,-2) }
-		};
+    public Tetromino TetrominoType
+    {
+        get { return tetromino; }
+    }
 
-		static readonly (int,int)[,] KickDataI = 
-		{
-			{ ( 0, 0), (-2, 0), (+1, 0), (-2,-1), (+1,+2) },
-			{ ( 0, 0), (+2, 0), (-1, 0), (+2,+1), (-1,-2) },
-			{ ( 0, 0), (-1, 0), (+2, 0), (-1,+2), (+2,-1) },
-			{ ( 0, 0), (+1, 0), (-2, 0), (+1,-2), (-2,+1) },
-			{ ( 0, 0), (+2, 0), (-1, 0), (+2,+1), (-1,-2) },
-			{ ( 0, 0), (-2, 0), (+1, 0), (-2,-1), (+1,+2) },
-			{ ( 0, 0), (+1, 0), (-2, 0), (+1,-2), (-2,+1) },
-			{ ( 0, 0), (-1, 0), (+2, 0), (-1,+2), (+2,-1) }
-		};
-		
-		static (int, int)[] GetKickData(PieceName piece, State pre, State post) {
-			var pieceKickData;
+    public int RotationIndex { get; private set; }
 
-			switch (piece) {
-				case O:
-					return (0, 0); 
-				case I:
-					pieceKickData = KickDataI;
-					break;
-				default:
-					pieceKickData = KickData;
-					break;
-			}
+    public IReadOnlyList<Transform> Blocks
+    {
+        get { return blocks; }
+    }
 
+    public void Initialize(Board ownerBoard)
+    {
+        board = ownerBoard;
+        RotationIndex = 0;
+        locked = false;
+        SnapToGrid();
+        nextStepTime = Time.time + stepDelay;
+        RefreshBlockCache();
+    }
 
-			switch ((pre, post)) {
-				case (NORTH, EAST):
-					return pieceKickData.NE;
-				case (EAST, NORTH):
-					return pieceKickData.EN;
-				case (EAST, SOUTH):
-					return pieceKickData.ES;
-				case (SOUTH, EAST):
-					return pieceKickData.SE;
-				case (SOUTH, WEST):
-					return pieceKickData.SW;
-				case (WEST, SOUTH):
-					return pieceKickData.WS;
-				case (NORTH, WEST):
-					return pieceKickData.WN;
-				case (WEST, NORTH):
-					return pieceKickData.NW;
-			}
-		}
-	}
+    private void Awake()
+    {
+        RefreshBlockCache();
+    }
+
+    private void OnValidate()
+    {
+        RefreshBlockCache();
+    }
+
+    private void Update()
+    {
+        if (board == null || locked || board.IsGameOver)
+        {
+            return;
+        }
+
+        HandleInput();
+        HandleGravity();
+    }
+
+    public void LockImmediately()
+    {
+        if (locked)
+        {
+            return;
+        }
+
+        locked = true;
+        board.LockActivePiece(this);
+    }
+
+    private void HandleInput()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            TryMove(Vector3.left);
+        }
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            TryMove(Vector3.right);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            TryRotate(-1);
+        }
+        else if (Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            TryRotate(1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            HardDrop();
+        }
+    }
+
+    private void HandleGravity()
+    {
+        float multiplier = Input.GetKey(KeyCode.DownArrow) ? Mathf.Max(0.01f, softDropMultiplier) : 1f;
+        float currentStepDelay = stepDelay * multiplier;
+
+        if (Time.time < nextStepTime)
+        {
+            return;
+        }
+
+        if (!TryMove(Vector3.down))
+        {
+            LockImmediately();
+            return;
+        }
+
+        nextStepTime = Time.time + currentStepDelay;
+    }
+
+    public bool TryMove(Vector3 worldDelta)
+    {
+        transform.position += worldDelta;
+        SnapToGrid();
+
+        if (board.IsValidPosition(this))
+        {
+            nextStepTime = Time.time + stepDelay;
+            return true;
+        }
+
+        transform.position -= worldDelta;
+        SnapToGrid();
+        return false;
+    }
+
+    public bool TryRotate(int direction)
+    {
+        int fromRotation = RotationIndex;
+        int toRotation = TetrominoData.Mod4(RotationIndex + direction);
+
+        float angle = direction > 0 ? -90f : 90f;
+        transform.Rotate(0f, 0f, angle);
+        SnapToGrid();
+
+        Vector2Int[] kicks = TetrominoData.GetKickData(tetromino, fromRotation, toRotation);
+        for (int i = 0; i < kicks.Length; i++)
+        {
+            Vector2Int offset = kicks[i];
+            transform.position += new Vector3(offset.x, offset.y, 0f);
+            SnapToGrid();
+
+            if (board.IsValidPosition(this))
+            {
+                RotationIndex = toRotation;
+                nextStepTime = Time.time + stepDelay;
+                return true;
+            }
+
+            transform.position -= new Vector3(offset.x, offset.y, 0f);
+            SnapToGrid();
+        }
+
+        transform.Rotate(0f, 0f, -angle);
+        SnapToGrid();
+        return false;
+    }
+
+    public void HardDrop()
+    {
+        while (TryMove(Vector3.down))
+        {
+        }
+
+        LockImmediately();
+    }
+
+    public void SnapToGrid()
+    {
+        Vector3 position = transform.position;
+        transform.position = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), position.z);
+
+        RefreshBlockCache();
+        for (int i = 0; i < blocks.Length; i++)
+        {
+            Transform block = blocks[i];
+            Vector3 world = block.position;
+            block.position = new Vector3(Mathf.Round(world.x), Mathf.Round(world.y), world.z);
+        }
+    }
+
+    private void RefreshBlockCache()
+    {
+        if (blocks != null && blocks.Length > 0)
+        {
+            return;
+        }
+
+        List<Transform> foundBlocks = new List<Transform>();
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            foundBlocks.Add(transform.GetChild(i));
+        }
+
+        blocks = foundBlocks.ToArray();
+    }
 }
