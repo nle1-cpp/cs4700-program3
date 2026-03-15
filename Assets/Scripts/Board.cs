@@ -126,6 +126,11 @@ public sealed class Board : MonoBehaviour
                 return false;
             }
 
+				if (cell.y >= height)
+				{
+					continue;
+				}
+
             if (grid[cell.x, cell.y] != null)
             {
                 return false;
@@ -244,7 +249,7 @@ public sealed class Board : MonoBehaviour
 
     private bool IsInside(Vector2Int cell)
     {
-        return cell.x >= 0 && cell.x < width && cell.y >= 0 && cell.y < height;
+        return cell.x >= 0 && cell.x < width && cell.y >= 0;
     }
 
     private void RebuildPrefabLookup()

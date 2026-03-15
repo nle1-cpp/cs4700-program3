@@ -147,6 +147,7 @@ MonoBehaviour:
   - {fileID: 8333181722162246103}
   stepDelay: 0.8
   softDropMultiplier: 0.1
+  pivotOffset: {x: 0.5, y: 0.5, z: 0}
 --- !u!1 &6677191870528933990
 GameObject:
   m_ObjectHideFlags: 0

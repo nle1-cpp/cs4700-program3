@@ -14,6 +14,9 @@ public sealed class Piece : MonoBehaviour
 	[SerializeField] private float stepDelay = 0.8f;
 	[SerializeField] private float softDropMultiplier = 0.1f;
 
+	[Header("Rotation Origin")]
+	[SerializeField] private Vector3 pivotOffset = Vector3.zero;
+
 	private Board board;
 	private float nextStepTime;
 	private bool locked;
@@ -144,7 +147,7 @@ public sealed class Piece : MonoBehaviour
 		int toRotation = TetrominoData.Mod4(RotationIndex + direction);
 
 		float angle = direction > 0 ? -90f : 90f;
-		transform.Rotate(0f, 0f, angle);
+		transform.RotateAround(transform.TransformPoint(pivotOffset), Vector3.forward, angle);
 		SnapToGrid();
 
 		Vector2Int[] kicks = TetrominoData.GetKickData(tetromino, fromRotation, toRotation);
