@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 1149703824243450888}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5, y: -0.5, z: 0}
+  m_LocalPosition: {x: 1, y: 0, z: 0}
   m_LocalScale: {x: 0.388, y: 0.388, z: 0.388}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -117,7 +117,7 @@ Transform:
   m_GameObject: {fileID: 1872323290593685388}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.5, y: -0.5, z: 0}
+  m_LocalPosition: {x: 1, y: 1, z: 0}
   m_LocalScale: {x: 0.388, y: 0.388, z: 0.388}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -208,7 +208,7 @@ Transform:
   m_GameObject: {fileID: 7036475218431764270}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.5, y: 1.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.388, y: 0.388, z: 0.388}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -299,7 +299,7 @@ Transform:
   m_GameObject: {fileID: 7896901740159686235}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.5, y: 0.5, z: 0}
+  m_LocalPosition: {x: -1, y: 0, z: 0}
   m_LocalScale: {x: 0.388, y: 0.388, z: 0.388}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -374,6 +374,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4396299547612481156}
   - component: {fileID: 2965157083460656721}
+  - component: {fileID: -6096547835565261822}
   m_Layer: 0
   m_Name: L Block
   m_TagString: Untagged
@@ -390,7 +391,7 @@ Transform:
   m_GameObject: {fileID: 8349940590935650146}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8, y: 18, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -407,10 +408,30 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8349940590935650146}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91e23bf6a275ea54f8b428b528aa70c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tetrimino
   rotationPoint: {x: -0.5, y: 0.5, z: 0}
   fallTime: 0.8
+--- !u!114 &-6096547835565261822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8349940590935650146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc3afcb8e26c06f3b940696654f95baf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Piece
+  tetromino: 2
+  blocks:
+  - {fileID: 1371696718728687491}
+  - {fileID: 3003206762365769704}
+  - {fileID: 9078022258158482563}
+  - {fileID: 3417375571124638157}
+  stepDelay: 0.8
+  softDropMultiplier: 0.1
