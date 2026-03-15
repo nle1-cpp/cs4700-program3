@@ -1,116 +1,124 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; // Essential for scene management
 
 public sealed class Game : MonoBehaviour
 {
-    [SerializeField] private Board board;
-    [SerializeField] private int previewCount = 7;
+	[SerializeField] private Board board;
+	[SerializeField] private int previewCount = 7;
 
-    private PieceQueue pieceQueue;
-    private int score;
-    private int totalLines;
+	private PieceQueue pieceQueue;
+	private ScoreBoard scoreboard;
+	private int totalLines;
 
-    public bool IsGameOver { get; private set; }
+	public bool IsGameOver { get; private set; }
 
-    public Tetromino[] UpcomingPieces
-    {
-        get { return pieceQueue == null ? new Tetromino[0] : pieceQueue.Contents; }
-    }
+	public Tetromino[] UpcomingPieces
+	{
+		get { return pieceQueue == null ? new Tetromino[0] : pieceQueue.Contents; }
+	}
 
-    private void Start()
-    {
-        if (board == null)
-        {
-            board = FindObjectOfType<Board>();
-        }
+	void Start()
+	{
+		if (scoreboard == null)
+		{
+			scoreboard = FindObjectOfType<ScoreBoard>();
 
-        if (board == null)
-        {
-            Debug.LogError("Game could not find a Board in the scene.");
-            enabled = false;
-            return;
-        }
+		}
 
-        board.Initialize(this);
-        StartNewGame();
-    }
+		if (board == null)
+		{
+			board = FindObjectOfType<Board>();
+		}
 
-    private void Update()
-    {
-        if (IsGameOver && Input.GetKeyDown(KeyCode.R))
-        {
-            StartNewGame();
-        }
-    }
+		if (board == null)
+		{
+			Debug.LogError("Game could not find a Board in the scene.");
+			enabled = false;
+			return;
+		}
 
-    public void StartNewGame()
-    {
-        IsGameOver = false;
-        score = 0;
-        totalLines = 0;
-        pieceQueue = new PieceQueue(previewCount);
-        board.ClearBoard();
-        SpawnNextPiece();
-    }
+		board.Initialize(this);
+		StartNewGame();
+	}
 
-    public void OnPieceLocked(int clearedLines)
-    {
-        if (clearedLines > 0)
-        {
-            totalLines += clearedLines;
-            score += ScoreForLines(clearedLines);
-        }
+	void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.R))
+		{
+			SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+			StartNewGame();
+		}
+	}
 
-        SpawnNextPiece();
-    }
+	public void StartNewGame()
+	{
+		IsGameOver = false;
+		scoreboard.score = 0;
+		totalLines = 0;
+		pieceQueue = new PieceQueue(previewCount);
+		board.ClearBoard();
+		SpawnNextPiece();
+	}
 
-    private void SpawnNextPiece()
-    {
-        Tetromino next = pieceQueue.Pop();
-        bool spawned = board.SpawnPiece(next);
-        if (!spawned)
-        {
-            IsGameOver = true;
-        }
-    }
+	public void OnPieceLocked(int clearedLines)
+	{
+		if (clearedLines > 0)
+		{
+			totalLines += clearedLines;
+			scoreboard.AddScore(ScoreForLines(clearedLines));
+		}
 
-    private int ScoreForLines(int lineCount)
-    {
-        switch (lineCount)
-        {
-            case 1: return 100;
-            case 2: return 300;
-            case 3: return 500;
-            case 4: return 800;
-            default: return lineCount * 200;
-        }
-    }
+		SpawnNextPiece();
+	}
 
-    private void OnGUI()
-    {
-        GUILayout.BeginArea(new Rect(10f, 10f, 260f, 220f), GUI.skin.box);
-        GUILayout.Label("Score: " + score);
-        GUILayout.Label("Lines: " + totalLines);
-        GUILayout.Space(8f);
-        GUILayout.Label("Next:");
+	private void SpawnNextPiece()
+	{
+		Tetromino next = pieceQueue.Pop();
+		bool spawned = board.SpawnPiece(next);
+		if (!spawned)
+		{
+			IsGameOver = true;
+		}
+	}
 
-        Tetromino[] preview = UpcomingPieces;
-        for (int i = 0; i < preview.Length; i++)
-        {
-            GUILayout.Label((i + 1) + ". " + preview[i]);
-        }
+	private int ScoreForLines(int lineCount)
+	{
+		switch (lineCount)
+		{
+			case 1: return 100;
+			case 2: return 300;
+			case 3: return 500;
+			case 4: return 800;
+			default: return lineCount * 200;
+		}
+	}
 
-        GUILayout.Space(10f);
-        GUILayout.Label("Left/Right: Move");
-        GUILayout.Label("Down: Soft Drop");
-        GUILayout.Label("Space: Hard Drop");
-        GUILayout.Label("Z / X: Rotate");
+	private void OnGUI()
+	{
+		GUILayout.BeginArea(new Rect(10f, 10f, 260f, 220f), GUI.skin.box);
+		GUILayout.Label("Score: " + scoreboard.score);
+		GUILayout.Label("Lines: " + totalLines);
+		GUILayout.Space(8f);
+		GUILayout.Label("Next:");
 
-        if (IsGameOver)
-        {
-            GUILayout.Space(10f);
-            GUILayout.Label("Game Over - Press R to Restart");
-        }
+		Tetromino[] preview = UpcomingPieces;
+		for (int i = 0; i < preview.Length; i++)
+		{
+			GUILayout.Label((i + 1) + ". " + preview[i]);
+		}
 
-        GUILayout.EndArea();
-    }
+		GUILayout.Space(10f);
+		GUILayout.Label("Left/Right: Move");
+		GUILayout.Label("Down: Soft Drop");
+		GUILayout.Label("Space: Hard Drop");
+		GUILayout.Label("Z / X: Rotate");
+
+		if (IsGameOver)
+		{
+			GUILayout.Space(10f);
+			GUILayout.Label("Game Over - Press R to Restart");
+		}
+
+		GUILayout.EndArea();
+	}
 }
