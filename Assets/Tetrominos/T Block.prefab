@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 622229977775377663}
-  - component: {fileID: 7323586784808978319}
   - component: {fileID: 5400433552524243033}
   m_Layer: 0
   m_Name: T Block
@@ -37,20 +36,6 @@ Transform:
   - {fileID: 6569682126806216268}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7323586784808978319
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1304302452999629282}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91e23bf6a275ea54f8b428b528aa70c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Tetrimino
-  rotationPoint: {x: 0.5, y: 0.5, z: 0}
-  fallTime: 0.8
 --- !u!114 &5400433552524243033
 MonoBehaviour:
   m_ObjectHideFlags: 0

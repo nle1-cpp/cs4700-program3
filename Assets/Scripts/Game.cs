@@ -95,30 +95,30 @@ public sealed class Game : MonoBehaviour
 
 	private void OnGUI()
 	{
-		GUILayout.BeginArea(new Rect(10f, 10f, 260f, 220f), GUI.skin.box);
-		GUILayout.Label("Score: " + scoreboard.score);
-		GUILayout.Label("Lines: " + totalLines);
-		GUILayout.Space(8f);
-		GUILayout.Label("Next:");
-
-		Tetromino[] preview = UpcomingPieces;
-		for (int i = 0; i < preview.Length; i++)
-		{
-			GUILayout.Label((i + 1) + ". " + preview[i]);
-		}
-
-		GUILayout.Space(10f);
-		GUILayout.Label("Left/Right: Move");
-		GUILayout.Label("Down: Soft Drop");
-		GUILayout.Label("Space: Hard Drop");
-		GUILayout.Label("Z / X: Rotate");
-
-		if (IsGameOver)
-		{
-			GUILayout.Space(10f);
-			GUILayout.Label("Game Over - Press R to Restart");
-		}
-
-		GUILayout.EndArea();
+		// GUILayout.BeginArea(new Rect(10f, 10f, 260f, 220f), GUI.skin.box);
+		// GUILayout.Label("Score: " + scoreboard.score);
+		// GUILayout.Label("Lines: " + totalLines);
+		// GUILayout.Space(8f);
+		// GUILayout.Label("Next:");
+		//
+		// Tetromino[] preview = UpcomingPieces;
+		// for (int i = 0; i < preview.Length; i++)
+		// {
+		// 	GUILayout.Label((i + 1) + ". " + preview[i]);
+		// }
+		//
+		// GUILayout.Space(10f);
+		// GUILayout.Label("Left/Right: Move");
+		// GUILayout.Label("Down: Soft Drop");
+		// GUILayout.Label("Space: Hard Drop");
+		// GUILayout.Label("Z / X: Rotate");
+		//
+		// if (IsGameOver)
+		// {
+		// 	GUILayout.Space(10f);
+		// 	GUILayout.Label("Game Over - Press R to Restart");
+		// }
+		//
+		// GUILayout.EndArea();
 	}
 }

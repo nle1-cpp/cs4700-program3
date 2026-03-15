@@ -6,5 +6,6 @@ Library/
 Logs/
 Temp/
 UserSettings/
+UIElementsSchema/
 
 .vscode
