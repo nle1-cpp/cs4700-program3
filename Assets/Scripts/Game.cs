@@ -6,6 +6,12 @@ public sealed class Game : MonoBehaviour
 	[SerializeField] private Board board;
 	[SerializeField] private int previewCount = 7;
 
+	[SerializeField] private PiecePreviewDisplay holdDisplay;
+	[SerializeField] private PiecePreviewDisplay queueDisplay;
+
+	private Tetromino activePiece;
+	private Tetromino heldPiece;
+	private bool holdUsedThisTurn;
 	private PieceQueue pieceQueue;
 	private ScoreBoard scoreboard;
 	private int totalLines;
@@ -48,6 +54,11 @@ public sealed class Game : MonoBehaviour
 			SceneManager.LoadScene(SceneManager.GetActiveScene().name);
 			StartNewGame();
 		}
+
+		if (Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.LeftShift))
+		{
+			 TryHoldPiece();
+		}
 	}
 
 	public void StartNewGame()
@@ -58,6 +69,12 @@ public sealed class Game : MonoBehaviour
 		pieceQueue = new PieceQueue(previewCount);
 		board.ClearBoard();
 		SpawnNextPiece();
+
+		heldPiece = (Tetromino) (-1);
+		holdUsedThisTurn = false;
+
+		holdDisplay?.SetPiece((Tetromino) (-1));
+		queueDisplay?.SetQueue(pieceQueue.Contents);
 	}
 
 	public void OnPieceLocked(int clearedLines)
@@ -68,17 +85,20 @@ public sealed class Game : MonoBehaviour
 			scoreboard.AddScore(ScoreForLines(clearedLines));
 		}
 
+		holdUsedThisTurn = false;
 		SpawnNextPiece();
 	}
 
 	private void SpawnNextPiece()
 	{
-		Tetromino next = pieceQueue.Pop();
-		bool spawned = board.SpawnPiece(next);
+		activePiece = pieceQueue.Pop();
+		bool spawned = board.SpawnPiece(activePiece);
 		if (!spawned)
 		{
 			IsGameOver = true;
 		}
+
+		queueDisplay?.SetQueue(pieceQueue.Contents);
 	}
 
 	private int ScoreForLines(int lineCount)
@@ -91,6 +111,41 @@ public sealed class Game : MonoBehaviour
 			case 4: return 800;
 			default: return lineCount * 200;
 		}
+	}
+
+	public void TryHoldPiece()
+	{
+		 if (holdUsedThisTurn || board.ActivePiece == null)
+			  return;
+
+		 Tetromino current = board.ActivePiece.TetrominoType;
+		 RemoveActivePiece();
+
+		 if (heldPiece == Tetromino.None)
+		 {
+			  heldPiece = current;
+			  holdUsedThisTurn = true;
+			  SpawnNextPiece();
+		 }
+		 else
+		 {
+			  Tetromino swap = heldPiece;
+			  heldPiece = current;
+			  holdUsedThisTurn = true;
+			  board.SpawnPiece(swap);
+		 }
+
+		 holdDisplay.SetPiece(heldPiece);
+		 queueDisplay.SetQueue(pieceQueue.Contents);
+	}
+
+	public void RemoveActivePiece()
+	{
+		 if (activePiece == Tetromino.None)
+			  return;
+
+		 Destroy(board.ActivePiece.gameObject);
+		 activePiece = Tetromino.None;
 	}
 
 	private void OnGUI()

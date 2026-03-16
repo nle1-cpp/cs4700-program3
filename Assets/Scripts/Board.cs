@@ -42,7 +42,7 @@ public sealed class Board : MonoBehaviour
 
     private void Awake()
     {
-        grid = new Transform[width, height];
+        grid = new Transform[width, height+4];
         RebuildPrefabLookup();
     }
 

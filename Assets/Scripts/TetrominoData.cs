@@ -8,7 +8,8 @@ public enum Tetromino
     O,
     S,
     T,
-    Z
+    Z,
+	 None = -1,
 }
 
 public static class TetrominoData
