@@ -16,7 +16,7 @@ public sealed class Board : MonoBehaviour
     [SerializeField] private int height = 20;
 
     [Header("Spawning")]
-    [SerializeField] private Vector2Int spawnCell = new Vector2Int(4, 18);
+    [SerializeField] private Vector2Int spawnCell = new Vector2Int(4, 20);
     [SerializeField] private PiecePrefabEntry[] piecePrefabs;
 
     private Transform[,] grid;

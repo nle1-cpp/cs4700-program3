@@ -14,11 +14,15 @@ public sealed class Piece : MonoBehaviour
 	[SerializeField] private Vector3 pivotOffset = Vector3.zero;
 
 	[Header("Movement")]
-	[SerializeField] private float stepDelay = 0.8f;
 	[SerializeField] private float moveRepeatDelay = 0.15f;
 	[SerializeField] private float moveRepeatRate = 0.05f;
-	[SerializeField] private float softDropFactor = 15f;
-	[SerializeField] private float gravityFactor = 4f;
+	[SerializeField] private float softDropFactor = 8f;
+	 private float gravityFactor = 1f;
+	 private float lockDelay = 0.5f;
+	 private int maxLockResets = 15;
+
+	private float lockTimer;
+	private int lockResetCount;
 
 	private float horizontalHoldTime;
 	private float horizontalRepeatTimer;
@@ -53,7 +57,8 @@ public sealed class Piece : MonoBehaviour
 		gravityStepTimer = 0;
 		gravityStepInterval = 1f / gravityFactor;
 		RefreshBlockCache();
-		softDropInterval = 1f / 60f;
+		softDropInterval = 1f / softDropFactor;
+		lockResetCount = 0;
 	}
 
 	private void Awake()
@@ -121,37 +126,37 @@ public sealed class Piece : MonoBehaviour
 
 	private void HandleMovementInput(int inputDir)
 	{
-		 if (inputDir == 0)
-		 {
-			  horizontalDirection = 0;
-			  horizontalHoldTime = 0f;
-			  horizontalRepeatTimer = 0f;
-			  return;
-		 }
+		if (inputDir == 0)
+		{
+			horizontalDirection = 0;
+			horizontalHoldTime = 0f;
+			horizontalRepeatTimer = 0f;
+			return;
+		}
 
-		 if (inputDir != horizontalDirection)
-		 {
-			  horizontalDirection = inputDir;
-			  horizontalHoldTime = 0f;
-			  horizontalRepeatTimer = 0f;
-			  TryMove(Vector3.right * horizontalDirection);
-			  return;
-		 }
+		if (inputDir != horizontalDirection)
+		{
+			horizontalDirection = inputDir;
+			horizontalHoldTime = 0f;
+			horizontalRepeatTimer = 0f;
+			TryMove(Vector3.right * horizontalDirection);
+			return;
+		}
 
-		 horizontalHoldTime += Time.deltaTime;
+		horizontalHoldTime += Time.deltaTime;
 
-		 if (horizontalHoldTime < moveRepeatDelay)
-		 {
-			  return;
-		 }
+		if (horizontalHoldTime < moveRepeatDelay)
+		{
+			return;
+		}
 
-		 horizontalRepeatTimer += Time.deltaTime;
+		horizontalRepeatTimer += Time.deltaTime;
 
-		 while (horizontalRepeatTimer >= moveRepeatRate)
-		 {
-			  horizontalRepeatTimer -= moveRepeatRate;
-			  TryMove(Vector3.right * horizontalDirection);
-		 }
+		while (horizontalRepeatTimer >= moveRepeatRate)
+		{
+			horizontalRepeatTimer -= moveRepeatRate;
+			TryMove(Vector3.right * horizontalDirection);
+		}
 	}
 
 	private void HandleSoftDropInput()
@@ -182,17 +187,30 @@ public sealed class Piece : MonoBehaviour
 	{
 		gravityStepTimer += Time.deltaTime;
 
-		if (gravityStepTimer < gravityStepInterval)
+		if (gravityStepTimer >= gravityStepInterval)
 		{
-			return;
+			gravityStepTimer -= gravityStepInterval;
+
+			if (TryMove(Vector3.down)) 
+			{
+				lockTimer = 0f;
+			}
 		}
 
-		gravityStepTimer = 0f;
-
-		if (!TryMove(Vector3.down))
+		if (IsGrounded())
 		{
-			LockImmediately();
+			lockTimer += Time.deltaTime;
+
+			if (lockTimer >= lockDelay)
+			{
+				LockImmediately();
+			}
 		}
+		else
+		{
+			lockTimer = 0f;
+		}
+
 	}
 
 	public bool TryMove(Vector3 worldDelta)
@@ -200,14 +218,24 @@ public sealed class Piece : MonoBehaviour
 		transform.position += worldDelta;
 		SnapToGrid();
 
-		if (board.IsValidPosition(this))
+		if (!board.IsValidPosition(this))
 		{
-			return true;
+			transform.position -= worldDelta;
+			SnapToGrid();
+			return false;
 		}
 
-		transform.position -= worldDelta;
-		SnapToGrid();
-		return false;
+		if (worldDelta.y < 0)
+		{
+			lockTimer = 0f;
+		}
+		else if (IsGrounded() && lockResetCount < maxLockResets)
+		{
+			lockTimer = 0f;
+			lockResetCount++;
+		}
+
+		return true;
 	}
 
 	public bool TryRotate(int direction)
@@ -229,7 +257,13 @@ public sealed class Piece : MonoBehaviour
 			if (board.IsValidPosition(this))
 			{
 				RotationIndex = toRotation;
-				gravityStepTimer -= stepDelay;
+
+				if (IsGrounded() && lockResetCount < maxLockResets)
+				{
+					 lockTimer = 0f;
+					 lockResetCount++;
+				}
+
 				return true;
 			}
 
@@ -265,6 +299,14 @@ public sealed class Piece : MonoBehaviour
 			Vector3 world = block.position;
 			block.position = new Vector3(Mathf.Round(world.x), Mathf.Round(world.y), world.z);
 		}
+	}
+
+	private bool IsGrounded()
+	{
+		transform.position += Vector3.down;
+		bool valid = board.IsValidPosition(this);
+		transform.position += Vector3.up;
+		return !valid;
 	}
 
 	private void RefreshBlockCache()
