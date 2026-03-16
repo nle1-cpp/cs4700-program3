@@ -10,15 +10,26 @@ public sealed class Piece : MonoBehaviour
 	[Tooltip("Leave empty to auto-collect direct child transforms as blocks.")]
 	[SerializeField] private Transform[] blocks;
 
-	[Header("Movement")]
-	[SerializeField] private float stepDelay = 0.8f;
-	[SerializeField] private float softDropMultiplier = 0.1f;
-
-	[Header("Rotation Origin")]
+	[Header("Rotation")]
 	[SerializeField] private Vector3 pivotOffset = Vector3.zero;
 
+	[Header("Movement")]
+	[SerializeField] private float stepDelay = 0.8f;
+	[SerializeField] private float moveRepeatDelay = 0.15f;
+	[SerializeField] private float moveRepeatRate = 0.05f;
+	[SerializeField] private float softDropFactor = 15f;
+	[SerializeField] private float gravityFactor = 4f;
+
+	private float horizontalHoldTime;
+	private float horizontalRepeatTimer;
+	private int horizontalDirection;
+	private float softDropTimer;
+	private float softDropInterval;
+
+	private float gravityStepTimer;
+	private float gravityStepInterval;
+
 	private Board board;
-	private float nextStepTime;
 	private bool locked;
 
 	public Tetromino TetrominoType
@@ -39,8 +50,10 @@ public sealed class Piece : MonoBehaviour
 		RotationIndex = 0;
 		locked = false;
 		SnapToGrid();
-		nextStepTime = Time.time + stepDelay;
+		gravityStepTimer = 0;
+		gravityStepInterval = 1f / gravityFactor;
 		RefreshBlockCache();
+		softDropInterval = 1f / 60f;
 	}
 
 	private void Awake()
@@ -61,6 +74,7 @@ public sealed class Piece : MonoBehaviour
 		}
 
 		HandleInput();
+		HandleSoftDropInput();
 		HandleGravity();
 	}
 
@@ -77,13 +91,17 @@ public sealed class Piece : MonoBehaviour
 
 	private void HandleInput()
 	{
-		if (Input.GetKeyDown(KeyCode.LeftArrow))
+		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			TryMove(Vector3.left);
+			HandleMovementInput(-1);
 		}
-		else if (Input.GetKeyDown(KeyCode.RightArrow))
+		else if (Input.GetKey(KeyCode.RightArrow))
 		{
-			TryMove(Vector3.right);
+			HandleMovementInput(1);
+		}
+		else
+		{
+			HandleMovementInput(0);
 		}
 
 		if (Input.GetKeyDown(KeyCode.Z))
@@ -101,28 +119,80 @@ public sealed class Piece : MonoBehaviour
 		}
 	}
 
+	private void HandleMovementInput(int inputDir)
+	{
+		 if (inputDir == 0)
+		 {
+			  horizontalDirection = 0;
+			  horizontalHoldTime = 0f;
+			  horizontalRepeatTimer = 0f;
+			  return;
+		 }
+
+		 if (inputDir != horizontalDirection)
+		 {
+			  horizontalDirection = inputDir;
+			  horizontalHoldTime = 0f;
+			  horizontalRepeatTimer = 0f;
+			  TryMove(Vector3.right * horizontalDirection);
+			  return;
+		 }
+
+		 horizontalHoldTime += Time.deltaTime;
+
+		 if (horizontalHoldTime < moveRepeatDelay)
+		 {
+			  return;
+		 }
+
+		 horizontalRepeatTimer += Time.deltaTime;
+
+		 while (horizontalRepeatTimer >= moveRepeatRate)
+		 {
+			  horizontalRepeatTimer -= moveRepeatRate;
+			  TryMove(Vector3.right * horizontalDirection);
+		 }
+	}
+
+	private void HandleSoftDropInput()
+	{
+		if (!Input.GetKey(KeyCode.DownArrow))
+		{
+			softDropTimer = 0f;
+			return;
+		}
+
+		softDropTimer += Time.deltaTime;
+
+		while (softDropTimer >= softDropInterval)
+		{
+			softDropTimer -= softDropInterval;
+
+			if (!TryMove(Vector3.down))
+			{
+				break;
+			}
+
+			FindObjectOfType<ScoreBoard>().AddScore(4);
+		}
+	}
+
+
 	private void HandleGravity()
 	{
-		float multiplier = Input.GetKey(KeyCode.DownArrow) ? Mathf.Max(0.01f, softDropMultiplier) : 1f;
-		float currentStepDelay = stepDelay * multiplier;
+		gravityStepTimer += Time.deltaTime;
 
-		if (Time.time < nextStepTime)
+		if (gravityStepTimer < gravityStepInterval)
 		{
 			return;
 		}
+
+		gravityStepTimer = 0f;
 
 		if (!TryMove(Vector3.down))
 		{
 			LockImmediately();
-			return;
 		}
-
-		if (multiplier == softDropMultiplier)
-		{
-			FindObjectOfType<ScoreBoard>().AddScore(4);
-		}
-
-		nextStepTime = Time.time + currentStepDelay;
 	}
 
 	public bool TryMove(Vector3 worldDelta)
@@ -132,7 +202,6 @@ public sealed class Piece : MonoBehaviour
 
 		if (board.IsValidPosition(this))
 		{
-			nextStepTime = Time.time + stepDelay;
 			return true;
 		}
 
@@ -160,7 +229,7 @@ public sealed class Piece : MonoBehaviour
 			if (board.IsValidPosition(this))
 			{
 				RotationIndex = toRotation;
-				nextStepTime = Time.time + stepDelay;
+				gravityStepTimer -= stepDelay;
 				return true;
 			}
 
